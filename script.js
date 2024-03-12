@@ -3,7 +3,7 @@ window.addEventListener('load', () => {
     const needle = document.querySelector('.needle');
   
     function updateCompass(position) {
-      if (position.coords.heading !== null) {
+      if (position.coords.heading !== null && position.coords.heading !== undefined) {
         const heading = position.coords.heading;
   
         // Calculate the difference between the user's heading and the magnetic north (which is 0 degrees)
@@ -12,7 +12,7 @@ window.addEventListener('load', () => {
         // Update the needle rotation
         needle.style.transform = `translateX(-50%) rotate(${northOffset}deg)`;
       } else {
-        alert("Heading information is not available.");
+        //alert("Heading information is not available.");
       }
     }
   
@@ -28,8 +28,7 @@ window.addEventListener('load', () => {
       alert('Geolocation is not supported by this browser.');
     }
   
-    // Call updateNeedle() initially and then every 100 milliseconds to ensure the needle constantly points north
+    // Call updateNeedle() initially to set the initial position of the needle
     updateNeedle();
-    setInterval(updateNeedle, 100);
   });
   
