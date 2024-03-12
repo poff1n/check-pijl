@@ -16,19 +16,11 @@ window.addEventListener('load', () => {
       }
     }
   
-    function updateNeedle() {
-      // Set the rotation of the needle to point north (0 degrees)
-      needle.style.transform = `translateX(-50%) rotate(0deg)`;
-    }
-  
     if (navigator.geolocation) {
       // Watch for changes in the user's position and update the compass accordingly
       navigator.geolocation.watchPosition(updateCompass, null, { enableHighAccuracy: true });
     } else {
       alert('Geolocation is not supported by this browser.');
     }
-  
-    // Call updateNeedle() initially to set the initial position of the needle
-    updateNeedle();
   });
   
