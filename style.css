@@ -29,7 +29,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     transition: transform 0.1s ease-out;
-    background: url(https://www.shareicon.net/data/128x128/2015/09/22/644798_arrows_512x512.png) center
+    background: url(https://cdn.onlinewebfonts.com/svg/img_467023.png) center
       no-repeat;
     background-size: contain;
   }
