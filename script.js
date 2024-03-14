@@ -59,9 +59,10 @@ function locationHandler(position) {
 function calcDegreeToPoint(latitude, longitude) {
   // Qibla geolocation
   const point = {
-    lat: 21.422487,
-    lng: 39.826206
+    lat: 48.8566, // Latitude of Paris
+    lng: 2.3522   // Longitude of Paris
   };
+  
 
   const phiK = (point.lat * Math.PI) / 180.0;
   const lambdaK = (point.lng * Math.PI) / 180.0;
