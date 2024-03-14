@@ -59,8 +59,8 @@ function locationHandler(position) {
 function calcDegreeToPoint(latitude, longitude) {
   // Qibla geolocation
   const point = {
-    lat: 48.8566, // Latitude of Paris
-    lng: 2.3522   // Longitude of Paris
+    lat: 71.706, // Latitude of greenland
+    lng: -42.604   // Longitude of greenland
   };
   
 
