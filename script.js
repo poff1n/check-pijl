@@ -1,12 +1,14 @@
 const arrow = document.getElementById('arrow');
 
-function updateArrow(alpha, beta, gamma, userLocation, objectLocation) {
-    // Calculate the angle between user's orientation and direction to the object
+function updateArrow(alpha, userLocation, objectLocation) {
     const objectDirection = calculateDirection(userLocation, objectLocation);
     const angle = objectDirection - alpha;
 
+    // Normalize angle to be within 0 and 360 degrees
+    const normalizedAngle = (angle + 360) % 360;
+
     // Update the arrow's rotation
-    arrow.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+    arrow.style.transform = `translate(-50%, -50%) rotate(${normalizedAngle}deg)`;
 }
 
 function calculateDirection(userLocation, objectLocation) {
@@ -15,17 +17,18 @@ function calculateDirection(userLocation, objectLocation) {
     const objectLat = objectLocation.latitude;
     const objectLng = objectLocation.longitude;
 
-    // Calculate the angle between user's orientation and direction to the object
-    const phiK = (userLat + objectLat) / 2.0 * Math.PI / 180.0;
-    const deltaLambda = userLng - objectLng;
-    const deltaPhi = userLat - objectLat;
-    const a = Math.sin(deltaPhi / 2.0 * Math.PI / 180.0) * Math.sin(deltaPhi / 2.0 * Math.PI / 180.0) + Math.cos(userLat * Math.PI / 180.0) * Math.cos(objectLat * Math.PI / 180.0) * Math.sin(deltaLambda / 2.0 * Math.PI / 180.0) * Math.sin(deltaLambda / 2.0 * Math.PI / 180.0);
-    const c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
-    const distance = 6371.0 * c; // Earth radius * angle between the points
-    const y = Math.sin(deltaLambda * Math.PI / 180.0) * Math.cos(objectLat * Math.PI / 180.0);
-    const x = Math.cos(userLat * Math.PI / 180.0) * Math.sin(objectLat * Math.PI / 180.0) - Math.sin(userLat * Math.PI / 180.0) * Math.cos(objectLat * Math.PI / 180.0) * Math.cos(deltaLambda * Math.PI / 180.0);
-    const bearing = Math.atan2(y, x) * 180.0 / Math.PI;
-    const angle = (bearing + 360) % 360; // Ensure angle is between 0 and 360 degrees
+    // Calculate angle using user and object coordinates
+    const deltaLng = objectLng - userLng;
+    const y = Math.sin(deltaLng) * Math.cos(objectLat);
+    const x =
+        Math.cos(userLat) * Math.sin(objectLat) -
+        Math.sin(userLat) * Math.cos(objectLat) * Math.cos(deltaLng);
+    let angle = Math.atan2(y, x) * (180 / Math.PI);
+
+    // Adjust angle to be between 0 and 360 degrees
+    if (angle < 0) {
+        angle += 360;
+    }
 
     return angle;
 }
@@ -36,25 +39,43 @@ function handleLocationError(error) {
 
 function getLocationAndOrientation(objectLocation) {
     if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(position => {
-            const userLocation = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-            };
-
-            window.addEventListener('deviceorientation', event => {
-                updateArrow(event.alpha, event.beta, event.gamma, userLocation, objectLocation);
-            });
-        }, handleLocationError);
+        navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
+            if (permissionStatus.state === 'granted') {
+                // Permission already granted
+                startWatchingPosition(objectLocation);
+            } else if (permissionStatus.state === 'prompt') {
+                // Permission not yet granted, prompt user
+                navigator.geolocation.getCurrentPosition(() => {
+                    // Permission granted after user interaction
+                    startWatchingPosition(objectLocation);
+                }, handleLocationError);
+            } else {
+                // Permission denied or other state
+                console.error('Geolocation permission denied.');
+            }
+        });
     } else {
         console.error('Geolocation is not supported by this browser.');
     }
 }
 
+function startWatchingPosition(objectLocation) {
+    navigator.geolocation.watchPosition(position => {
+        const userLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        };
+
+        window.addEventListener('deviceorientation', event => {
+            updateArrow(event.alpha, userLocation, objectLocation);
+        });
+    }, handleLocationError);
+}
+
 // Replace these values with the coordinates of your object
 const objectLocation = {
-    latitude: 52.409675124771326, 
-    longitude: 4.749416581088284
+    latitude: 40.7128,
+    longitude: -74.0060
 };
 
 getLocationAndOrientation(objectLocation);
