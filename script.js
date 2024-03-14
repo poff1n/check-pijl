@@ -59,8 +59,8 @@ function locationHandler(position) {
 function calcDegreeToPoint(latitude, longitude) {
   // Qibla geolocation
   const point = {
-    lat: 52.386476603957746, 
-    lng: 5.235166502317465
+    lat: 21.422487,
+    lng: 39.826206
   };
 
   const phiK = (point.lat * Math.PI) / 180.0;
