@@ -1,81 +1,80 @@
-const arrow = document.getElementById('arrow');
+const compassCircle = document.querySelector(".compass-circle");
+const myPoint = document.querySelector(".my-point");
+const startBtn = document.querySelector(".start-btn");
+const isIOS =
+  navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
+  navigator.userAgent.match(/AppleWebKit/);
 
-function updateArrow(alpha, userLocation, objectLocation) {
-    const objectDirection = calculateDirection(userLocation, objectLocation);
-    const angle = objectDirection - alpha;
+function init() {
+  startBtn.addEventListener("click", startCompass);
+  navigator.geolocation.getCurrentPosition(locationHandler);
 
-    // Normalize angle to be within 0 and 360 degrees
-    const normalizedAngle = (angle + 360) % 360;
-
-    // Update the arrow's rotation
-    arrow.style.transform = `translate(-50%, -50%) rotate(${normalizedAngle}deg)`;
+  if (!isIOS) {
+    window.addEventListener("deviceorientationabsolute", handler, true);
+  }
 }
 
-function calculateDirection(userLocation, objectLocation) {
-    const userLat = userLocation.latitude;
-    const userLng = userLocation.longitude;
-    const objectLat = objectLocation.latitude;
-    const objectLng = objectLocation.longitude;
-
-    // Calculate angle using user and object coordinates
-    const deltaLng = objectLng - userLng;
-    const y = Math.sin(deltaLng) * Math.cos(objectLat);
-    const x =
-        Math.cos(userLat) * Math.sin(objectLat) -
-        Math.sin(userLat) * Math.cos(objectLat) * Math.cos(deltaLng);
-    let angle = Math.atan2(y, x) * (180 / Math.PI);
-
-    // Adjust angle to be between 0 and 360 degrees
-    if (angle < 0) {
-        angle += 360;
-    }
-
-    return angle;
+function startCompass() {
+  if (isIOS) {
+    DeviceOrientationEvent.requestPermission()
+      .then((response) => {
+        if (response === "granted") {
+          window.addEventListener("deviceorientation", handler, true);
+        } else {
+          alert("has to be allowed!");
+        }
+      })
+      .catch(() => alert("not supported"));
+  }
 }
 
-function handleLocationError(error) {
-    console.error(`Error getting user's location: ${error.message}`);
+function handler(e) {
+  compass = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+  compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
+
+  // ±15 degree
+  if (
+    (pointDegree < Math.abs(compass) &&
+      pointDegree + 15 > Math.abs(compass)) ||
+    pointDegree > Math.abs(compass + 15) ||
+    pointDegree < Math.abs(compass)
+  ) {
+    myPoint.style.opacity = 0;
+  } else if (pointDegree) {
+    myPoint.style.opacity = 1;
+  }
 }
 
-function getLocationAndOrientation(objectLocation) {
-    if (navigator.geolocation) {
-        navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
-            if (permissionStatus.state === 'granted') {
-                // Permission already granted
-                startWatchingPosition(objectLocation);
-            } else if (permissionStatus.state === 'prompt') {
-                // Permission not yet granted, prompt user
-                navigator.geolocation.getCurrentPosition(() => {
-                    // Permission granted after user interaction
-                    startWatchingPosition(objectLocation);
-                }, handleLocationError);
-            } else {
-                // Permission denied or other state
-                console.error('Geolocation permission denied.');
-            }
-        });
-    } else {
-        console.error('Geolocation is not supported by this browser.');
-    }
+let pointDegree;
+
+function locationHandler(position) {
+  const { latitude, longitude } = position.coords;
+  pointDegree = calcDegreeToPoint(latitude, longitude);
+
+  if (pointDegree < 0) {
+    pointDegree = pointDegree + 360;
+  }
 }
 
-function startWatchingPosition(objectLocation) {
-    navigator.geolocation.watchPosition(position => {
-        const userLocation = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-        };
+function calcDegreeToPoint(latitude, longitude) {
+  // Qibla geolocation
+  const point = {
+    lat: 21.422487,
+    lng: 39.826206
+  };
 
-        window.addEventListener('deviceorientation', event => {
-            updateArrow(event.alpha, userLocation, objectLocation);
-        });
-    }, handleLocationError);
+  const phiK = (point.lat * Math.PI) / 180.0;
+  const lambdaK = (point.lng * Math.PI) / 180.0;
+  const phi = (latitude * Math.PI) / 180.0;
+  const lambda = (longitude * Math.PI) / 180.0;
+  const psi =
+    (180.0 / Math.PI) *
+    Math.atan2(
+      Math.sin(lambdaK - lambda),
+      Math.cos(phi) * Math.tan(phiK) -
+        Math.sin(phi) * Math.cos(lambdaK - lambda)
+    );
+  return Math.round(psi);
 }
 
-// Replace these values with the coordinates of your object
-const objectLocation = {
-    latitude: 40.7128,
-    longitude: -74.0060
-};
-
-getLocationAndOrientation(objectLocation);
+init();
