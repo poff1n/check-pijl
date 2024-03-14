@@ -5,6 +5,10 @@ const isIOS =
   navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
   navigator.userAgent.match(/AppleWebKit/);
 
+// Specify the latitude and longitude of your target point
+const targetLatitude = 64.2479;
+const targetLongitude = 95.1104;
+
 function init() {
   startBtn.addEventListener("click", startCompass);
   navigator.geolocation.getCurrentPosition(locationHandler);
@@ -32,7 +36,6 @@ function handler(e) {
   compass = e.webkitCompassHeading || Math.abs(e.alpha - 360);
   compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
 
-  // ±15 degree
   if (
     (pointDegree < Math.abs(compass) &&
       pointDegree + 15 > Math.abs(compass)) ||
@@ -49,23 +52,16 @@ let pointDegree;
 
 function locationHandler(position) {
   const { latitude, longitude } = position.coords;
-  pointDegree = calcDegreeToPoint(latitude, longitude);
+  pointDegree = calcDegreeToPoint(latitude, longitude, targetLatitude, targetLongitude);
 
   if (pointDegree < 0) {
     pointDegree = pointDegree + 360;
   }
 }
 
-function calcDegreeToPoint(latitude, longitude) {
-  // Qibla geolocation
-  const point = {
-    lat: 71.706, // Latitude of greenland
-    lng: -42.604   // Longitude of greenland
-  };
-  
-
-  const phiK = (point.lat * Math.PI) / 180.0;
-  const lambdaK = (point.lng * Math.PI) / 180.0;
+function calcDegreeToPoint(latitude, longitude, targetLatitude, targetLongitude) {
+  const phiK = (targetLatitude * Math.PI) / 180.0;
+  const lambdaK = (targetLongitude * Math.PI) / 180.0;
   const phi = (latitude * Math.PI) / 180.0;
   const lambda = (longitude * Math.PI) / 180.0;
   const psi =
